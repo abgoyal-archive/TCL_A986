@@ -1,0 +1,289 @@
+
+
+#include "config.h"
+#include "Cursor.h"
+
+namespace WebCore {
+
+Cursor::Cursor(const Cursor& other)
+    : m_impl(other.m_impl)
+{
+}
+
+Cursor::Cursor(Image* image, const IntPoint& hotSpot)
+    : m_impl(image, hotSpot)
+{
+}
+
+Cursor::~Cursor()
+{
+}
+
+Cursor& Cursor::operator=(const Cursor& other)
+{
+    m_impl = other.m_impl;
+    return *this;
+}
+
+Cursor::Cursor(PlatformCursor c)
+    : m_impl(c)
+{
+}
+
+const Cursor& pointerCursor()
+{
+    static const Cursor c(PlatformCursor::TypePointer);
+    return c;
+}
+
+const Cursor& crossCursor()
+{
+    static const Cursor c(PlatformCursor::TypeCross);
+    return c;
+}
+
+const Cursor& handCursor()
+{
+    static const Cursor c(PlatformCursor::TypeHand);
+    return c;
+}
+
+const Cursor& iBeamCursor()
+{
+    static const Cursor c(PlatformCursor::TypeIBeam);
+    return c;
+}
+
+const Cursor& waitCursor()
+{
+    static const Cursor c(PlatformCursor::TypeWait);
+    return c;
+}
+
+const Cursor& helpCursor()
+{
+    static const Cursor c(PlatformCursor::TypeHelp);
+    return c;
+}
+
+const Cursor& eastResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeEastResize);
+    return c;
+}
+
+const Cursor& northResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthResize);
+    return c;
+}
+
+const Cursor& northEastResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthEastResize);
+    return c;
+}
+
+const Cursor& northWestResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthWestResize);
+    return c;
+}
+
+const Cursor& southResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeSouthResize);
+    return c;
+}
+
+const Cursor& southEastResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeSouthEastResize);
+    return c;
+}
+
+const Cursor& southWestResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeSouthWestResize);
+    return c;
+}
+
+const Cursor& westResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeWestResize);
+    return c;
+}
+
+const Cursor& northSouthResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthSouthResize);
+    return c;
+}
+
+const Cursor& eastWestResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeEastWestResize);
+    return c;
+}
+
+const Cursor& northEastSouthWestResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthEastSouthWestResize);
+    return c;
+}
+
+const Cursor& northWestSouthEastResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthWestSouthEastResize);
+    return c;
+}
+
+const Cursor& columnResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeColumnResize);
+    return c;
+}
+
+const Cursor& rowResizeCursor()
+{
+    static const Cursor c(PlatformCursor::TypeRowResize);
+    return c;
+}
+
+const Cursor& middlePanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeMiddlePanning);
+    return c;
+}
+
+const Cursor& eastPanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeEastPanning);
+    return c;
+}
+
+const Cursor& northPanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthPanning);
+    return c;
+}
+
+const Cursor& northEastPanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthEastPanning);
+    return c;
+}
+
+const Cursor& northWestPanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNorthWestPanning);
+    return c;
+}
+
+const Cursor& southPanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeSouthPanning);
+    return c;
+}
+
+const Cursor& southEastPanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeSouthEastPanning);
+    return c;
+}
+
+const Cursor& southWestPanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeSouthWestPanning);
+    return c;
+}
+
+const Cursor& westPanningCursor()
+{
+    static const Cursor c(PlatformCursor::TypeWestPanning);
+    return c;
+}
+
+const Cursor& moveCursor() 
+{
+    static const Cursor c(PlatformCursor::TypeMove);
+    return c;
+}
+
+const Cursor& verticalTextCursor()
+{
+    static const Cursor c(PlatformCursor::TypeVerticalText);
+    return c;
+}
+
+const Cursor& cellCursor()
+{
+    static const Cursor c(PlatformCursor::TypeCell);
+    return c;
+}
+
+const Cursor& contextMenuCursor()
+{
+    static const Cursor c(PlatformCursor::TypeContextMenu);
+    return c;
+}
+
+const Cursor& aliasCursor()
+{
+    static const Cursor c(PlatformCursor::TypeAlias);
+    return c;
+}
+
+const Cursor& progressCursor()
+{
+    static const Cursor c(PlatformCursor::TypeProgress);
+    return c;
+}
+
+const Cursor& noDropCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNoDrop);
+    return c;
+}
+
+const Cursor& copyCursor()
+{
+    static const Cursor c(PlatformCursor::TypeCopy);
+    return c;
+}
+
+const Cursor& noneCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNone);
+    return c;
+}
+
+const Cursor& notAllowedCursor()
+{
+    static const Cursor c(PlatformCursor::TypeNotAllowed);
+    return c;
+}
+
+const Cursor& zoomInCursor()
+{
+    static const Cursor c(PlatformCursor::TypeZoomIn);
+    return c;
+}
+
+const Cursor& zoomOutCursor()
+{
+    static const Cursor c(PlatformCursor::TypeZoomOut);
+    return c;
+}
+
+const Cursor& grabCursor()
+{
+    return pointerCursor();
+}
+
+const Cursor& grabbingCursor()
+{
+    return pointerCursor();
+}
+
+} // namespace WebCore

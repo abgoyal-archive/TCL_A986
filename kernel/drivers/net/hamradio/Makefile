@@ -1,0 +1,10 @@
+obj-$(CONFIG_DMASCC)		+= dmascc.o
+obj-$(CONFIG_SCC)		+= scc.o
+obj-$(CONFIG_MKISS)		+= mkiss.o
+obj-$(CONFIG_6PACK)		+= 6pack.o
+obj-$(CONFIG_YAM)		+= yam.o
+obj-$(CONFIG_BPQETHER)		+= bpqether.o
+obj-$(CONFIG_BAYCOM_SER_FDX)	+= baycom_ser_fdx.o	hdlcdrv.o
+obj-$(CONFIG_BAYCOM_SER_HDX)	+= baycom_ser_hdx.o	hdlcdrv.o
+obj-$(CONFIG_BAYCOM_PAR)	+= baycom_par.o		hdlcdrv.o
+obj-$(CONFIG_BAYCOM_EPP)	+= baycom_epp.o		hdlcdrv.o

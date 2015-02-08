@@ -1,0 +1,146 @@
+
+
+#include "config.h"
+
+#if ENABLE(SVG)
+#include "SVGResourceClipper.h"
+
+#include "AffineTransform.h"
+#include "GraphicsContext.h"
+#include "SVGRenderTreeAsText.h"
+
+#if PLATFORM(CG)
+#include <ApplicationServices/ApplicationServices.h>
+#endif
+
+namespace WebCore {
+
+SVGResourceClipper::SVGResourceClipper()
+    : SVGResource()
+{
+}
+
+SVGResourceClipper::~SVGResourceClipper()
+{
+}
+
+void SVGResourceClipper::resetClipData()
+{
+    m_clipData.clear();
+    m_clipperBoundingBox = FloatRect();
+}
+
+void SVGResourceClipper::invalidate()
+{
+    SVGResource::invalidate();
+    resetClipData();
+}
+
+FloatRect SVGResourceClipper::clipperBoundingBox(const FloatRect& objectBoundingBox)
+{
+    // FIXME: We need a different calculation for other clip content than paths.
+    if (!m_clipperBoundingBox.isEmpty())
+        return m_clipperBoundingBox;
+
+    if (m_clipData.clipData().isEmpty())
+        return FloatRect();
+
+    for (unsigned x = 0; x < m_clipData.clipData().size(); x++) {
+        ClipData clipData = m_clipData.clipData()[x];
+
+        FloatRect clipPathRect = clipData.path.boundingRect();
+        if (clipData.bboxUnits) {
+            clipPathRect.scale(objectBoundingBox.width(), objectBoundingBox.height());
+            clipPathRect.move(objectBoundingBox.x(), objectBoundingBox.y());
+        }
+        m_clipperBoundingBox.unite(clipPathRect);
+    }
+
+    return m_clipperBoundingBox;
+}
+
+void SVGResourceClipper::applyClip(GraphicsContext* context, const FloatRect& boundingBox) const
+{
+    if (m_clipData.clipData().isEmpty())
+        return;
+
+    bool heterogenousClipRules = false;
+    WindRule clipRule = m_clipData.clipData()[0].windRule;
+
+    context->beginPath();
+
+    for (unsigned x = 0; x < m_clipData.clipData().size(); x++) {
+        ClipData clipData = m_clipData.clipData()[x];
+        if (clipData.windRule != clipRule)
+            heterogenousClipRules = true;
+        
+        Path clipPath = clipData.path;
+
+        if (clipData.bboxUnits) {
+            AffineTransform transform;
+            transform.translate(boundingBox.x(), boundingBox.y());
+            transform.scaleNonUniform(boundingBox.width(), boundingBox.height());
+            clipPath.transform(transform);
+        }
+        context->addPath(clipPath);
+    }
+
+    // FIXME!
+    // We don't currently allow for heterogenous clip rules.
+    // we would have to detect such, draw to a mask, and then clip
+    // to that mask
+    context->clipPath(clipRule);
+}
+
+void SVGResourceClipper::addClipData(const Path& path, WindRule rule, bool bboxUnits)
+{
+    m_clipData.addPath(path, rule, bboxUnits);
+}
+
+const ClipDataList& SVGResourceClipper::clipData() const
+{
+    return m_clipData;
+}
+
+TextStream& SVGResourceClipper::externalRepresentation(TextStream& ts) const
+{
+    ts << "[type=CLIPPER]";
+    ts << " [clip data=" << clipData().clipData() << "]";
+    return ts;
+}
+
+TextStream& operator<<(TextStream& ts, WindRule rule)
+{
+    switch (rule) {
+        case RULE_NONZERO:
+            ts << "NON-ZERO"; break;
+        case RULE_EVENODD:
+            ts << "EVEN-ODD"; break;
+    }
+
+    return ts;
+}
+
+TextStream& operator<<(TextStream& ts, const ClipData& d)
+{
+    ts << "[winding=" << d.windRule << "]";
+
+    if (d.bboxUnits)
+        ts << " [bounding box mode=" << d.bboxUnits << "]";
+
+    ts << " [path=" << d.path.debugString() << "]";
+    return ts;
+}
+
+SVGResourceClipper* getClipperById(Document* document, const AtomicString& id, const RenderObject* object)
+{
+    SVGResource* resource = getResourceById(document, id, object);
+    if (resource && resource->isClipper())
+        return static_cast<SVGResourceClipper*>(resource);
+
+    return 0;
+}
+
+} // namespace WebCore
+
+#endif

@@ -1,0 +1,2 @@
+
+#define REGS_SAIF_SIZE	0x2000

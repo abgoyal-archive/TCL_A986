@@ -1,0 +1,2 @@
+
+#include <JavaScriptCore/Locker.h>

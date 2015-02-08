@@ -1,0 +1,21 @@
+
+
+/* messages define for HAL Module */
+#ifndef	__BFA_LOG_HAL_H__
+#define	__BFA_LOG_HAL_H__
+#include  <cs/bfa_log.h>
+#define BFA_LOG_HAL_ASSERT \
+	(((u32) BFA_LOG_HAL_ID << BFA_LOG_MODID_OFFSET) | 1)
+#define BFA_LOG_HAL_HEARTBEAT_FAILURE \
+	(((u32) BFA_LOG_HAL_ID << BFA_LOG_MODID_OFFSET) | 2)
+#define BFA_LOG_HAL_FCPIM_PARM_INVALID \
+	(((u32) BFA_LOG_HAL_ID << BFA_LOG_MODID_OFFSET) | 3)
+#define BFA_LOG_HAL_SM_ASSERT \
+	(((u32) BFA_LOG_HAL_ID << BFA_LOG_MODID_OFFSET) | 4)
+#define BFA_LOG_HAL_DRIVER_ERROR \
+	(((u32) BFA_LOG_HAL_ID << BFA_LOG_MODID_OFFSET) | 5)
+#define BFA_LOG_HAL_DRIVER_CONFIG_ERROR \
+	(((u32) BFA_LOG_HAL_ID << BFA_LOG_MODID_OFFSET) | 6)
+#define BFA_LOG_HAL_MBOX_ERROR \
+	(((u32) BFA_LOG_HAL_ID << BFA_LOG_MODID_OFFSET) | 7)
+#endif

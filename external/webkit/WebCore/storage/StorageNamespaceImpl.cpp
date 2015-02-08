@@ -1,0 +1,147 @@
+
+
+#include "config.h"
+#include "StorageNamespaceImpl.h"
+
+#if ENABLE(DOM_STORAGE)
+
+#include "SecurityOriginHash.h"
+#include "StringHash.h"
+#include "StorageAreaImpl.h"
+#include "StorageMap.h"
+#include "StorageSyncManager.h"
+#include <wtf/StdLibExtras.h>
+
+#ifdef ANDROID
+#include "Page.h"
+#endif
+
+namespace WebCore {
+
+typedef HashMap<String, StorageNamespace*> LocalStorageNamespaceMap;
+
+static LocalStorageNamespaceMap& localStorageNamespaceMap()
+{
+    DEFINE_STATIC_LOCAL(LocalStorageNamespaceMap, localStorageNamespaceMap, ());
+    return localStorageNamespaceMap;
+}
+
+PassRefPtr<StorageNamespace> StorageNamespaceImpl::localStorageNamespace(const String& path, unsigned quota)
+{
+    const String lookupPath = path.isNull() ? String("") : path;
+    LocalStorageNamespaceMap::iterator it = localStorageNamespaceMap().find(lookupPath);
+    if (it == localStorageNamespaceMap().end()) {
+        RefPtr<StorageNamespace> storageNamespace = adoptRef(new StorageNamespaceImpl(LocalStorage, lookupPath, quota));
+        localStorageNamespaceMap().set(lookupPath, storageNamespace.get());
+        return storageNamespace.release();
+    }
+
+    return it->second;
+}
+
+PassRefPtr<StorageNamespace> StorageNamespaceImpl::sessionStorageNamespace()
+{
+    return adoptRef(new StorageNamespaceImpl(SessionStorage, String(), StorageMap::noQuota));
+}
+
+StorageNamespaceImpl::StorageNamespaceImpl(StorageType storageType, const String& path, unsigned quota)
+    : m_storageType(storageType)
+    , m_path(path.crossThreadString())
+    , m_syncManager(0)
+    , m_quota(quota)
+    , m_isShutdown(false)
+{
+    if (m_storageType == LocalStorage && !m_path.isEmpty())
+        m_syncManager = StorageSyncManager::create(m_path);
+}
+
+StorageNamespaceImpl::~StorageNamespaceImpl()
+{
+    ASSERT(isMainThread());
+
+    if (m_storageType == LocalStorage) {
+        ASSERT(localStorageNamespaceMap().get(m_path) == this);
+        localStorageNamespaceMap().remove(m_path);
+    }
+
+    if (!m_isShutdown)
+        close();
+}
+
+PassRefPtr<StorageNamespace> StorageNamespaceImpl::copy()
+{
+    ASSERT(isMainThread());
+    ASSERT(!m_isShutdown);
+    ASSERT(m_storageType == SessionStorage);
+
+    StorageNamespaceImpl* newNamespace = new StorageNamespaceImpl(m_storageType, m_path, m_quota);
+
+    StorageAreaMap::iterator end = m_storageAreaMap.end();
+    for (StorageAreaMap::iterator i = m_storageAreaMap.begin(); i != end; ++i)
+        newNamespace->m_storageAreaMap.set(i->first, i->second->copy());
+    return adoptRef(newNamespace);
+}
+
+PassRefPtr<StorageArea> StorageNamespaceImpl::storageArea(PassRefPtr<SecurityOrigin> prpOrigin)
+{
+    ASSERT(isMainThread());
+    ASSERT(!m_isShutdown);
+
+    RefPtr<SecurityOrigin> origin = prpOrigin;
+    RefPtr<StorageAreaImpl> storageArea;
+    if (storageArea = m_storageAreaMap.get(origin))
+        return storageArea.release();
+
+    storageArea = StorageAreaImpl::create(m_storageType, origin, m_syncManager, m_quota);
+    m_storageAreaMap.set(origin.release(), storageArea);
+    return storageArea.release();
+}
+
+void StorageNamespaceImpl::close()
+{
+    ASSERT(isMainThread());
+    ASSERT(!m_isShutdown);
+
+    // If we're session storage, we shouldn't need to do any work here.
+    if (m_storageType == SessionStorage) {
+        ASSERT(!m_syncManager);
+        return;
+    }
+
+    StorageAreaMap::iterator end = m_storageAreaMap.end();
+    for (StorageAreaMap::iterator it = m_storageAreaMap.begin(); it != end; ++it)
+        it->second->close();
+
+    if (m_syncManager)
+        m_syncManager->close();
+
+    m_isShutdown = true;
+}
+
+#ifdef ANDROID
+void StorageNamespaceImpl::clear(Page* page)
+{
+    ASSERT(isMainThread());
+    if (m_isShutdown)
+        return;
+
+    // Clear all the keys for each of the storage areas.
+    StorageAreaMap::iterator end = m_storageAreaMap.end();
+    for (StorageAreaMap::iterator it = m_storageAreaMap.begin(); it != end; ++it) {
+        // if there is no page provided, then the user tried to clear storage
+        // with only pages in private browsing mode open. So we do not need to
+        // provide a Frame* here (as the frame is only used to dispatch storage events
+        // and private browsing pages won't be using them).
+        it->second->clear(page ? page->mainFrame() : 0);
+    }
+}
+#endif
+
+void StorageNamespaceImpl::unlock()
+{
+    // Because there's a single event loop per-process, this is a no-op.
+}
+
+} // namespace WebCore
+
+#endif // ENABLE(DOM_STORAGE)

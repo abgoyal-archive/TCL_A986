@@ -1,0 +1,27 @@
+
+
+#ifndef Tracing_h
+#define Tracing_h
+
+#if HAVE(DTRACE)
+#include "TracingDtrace.h"
+#else
+
+#define JAVASCRIPTCORE_GC_BEGIN()
+#define JAVASCRIPTCORE_GC_BEGIN_ENABLED() 0
+
+#define JAVASCRIPTCORE_GC_END()
+#define JAVASCRIPTCORE_GC_END_ENABLED() 0
+
+#define JAVASCRIPTCORE_GC_MARKED()
+#define JAVASCRIPTCORE_GC_MARKED_ENABLED() 0
+
+#define JAVASCRIPTCORE_PROFILE_WILL_EXECUTE(arg0, arg1, arg2, arg3)
+#define JAVASCRIPTCORE_PROFILE_WILL_EXECUTE_ENABLED() 0
+
+#define JAVASCRIPTCORE_PROFILE_DID_EXECUTE(arg0, arg1, arg2, arg3)
+#define JAVASCRIPTCORE_PROFILE_DID_EXECUTE_ENABLED() 0
+
+#endif
+
+#endif // Tracing_h

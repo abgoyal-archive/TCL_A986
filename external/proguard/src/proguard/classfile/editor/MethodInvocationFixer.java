@@ -1,0 +1,229 @@
+
+package proguard.classfile.editor;
+
+import proguard.classfile.*;
+import proguard.classfile.attribute.*;
+import proguard.classfile.attribute.visitor.AttributeVisitor;
+import proguard.classfile.constant.*;
+import proguard.classfile.constant.visitor.ConstantVisitor;
+import proguard.classfile.instruction.*;
+import proguard.classfile.instruction.visitor.InstructionVisitor;
+import proguard.classfile.util.*;
+import proguard.classfile.visitor.*;
+
+public class MethodInvocationFixer
+extends      SimplifiedVisitor
+implements   AttributeVisitor,
+             InstructionVisitor,
+             ConstantVisitor,
+             ClassVisitor,
+             MemberVisitor
+{
+    private static final boolean DEBUG = false;
+
+
+    private final CodeAttributeEditor codeAttributeEditor = new CodeAttributeEditor();
+
+    // Return values for the visitor methods.
+    private Clazz  referencedClass;
+    private Clazz  referencedMethodClass;
+    private Member referencedMethod;
+
+
+    // Implementations for AttributeVisitor.
+
+    public void visitAnyAttribute(Clazz clazz, Attribute attribute) {}
+
+
+    public void visitCodeAttribute(Clazz clazz, Method method, CodeAttribute codeAttribute)
+    {
+        // Reset the code attribute editor.
+        codeAttributeEditor.reset(codeAttribute.u4codeLength);
+
+        // Remap the variables of the instructions.
+        codeAttribute.instructionsAccept(clazz, method, this);
+
+        // Apply the code atribute editor.
+        codeAttributeEditor.visitCodeAttribute(clazz, method, codeAttribute);
+    }
+
+
+    // Implementations for InstructionVisitor.
+
+    public void visitAnyInstruction(Clazz clazz, Method method, CodeAttribute codeAttribute, int offset, Instruction instruction) {}
+
+
+    public void visitConstantInstruction(Clazz clazz, Method method, CodeAttribute codeAttribute, int offset, ConstantInstruction constantInstruction)
+    {
+        int constantIndex = constantInstruction.constantIndex;
+
+        // Get information on the called class and method, if present.
+        referencedMethod = null;
+
+        clazz.constantPoolEntryAccept(constantIndex, this);
+
+        // Did we find the called class and method?
+        if (referencedMethod != null)
+        {
+            // Do we need to update the opcode?
+            byte opcode = constantInstruction.opcode;
+
+            // Is the method static?
+            if ((referencedMethod.getAccessFlags() & ClassConstants.INTERNAL_ACC_STATIC) != 0)
+            {
+                // But is it not a static invocation?
+                if (opcode != InstructionConstants.OP_INVOKESTATIC)
+                {
+                    // Replace the invocation by an invokestatic instruction.
+                    Instruction replacementInstruction =
+                        new ConstantInstruction(InstructionConstants.OP_INVOKESTATIC,
+                                                constantIndex).shrink();
+
+                    codeAttributeEditor.replaceInstruction(offset, replacementInstruction);
+
+                    if (DEBUG)
+                    {
+                        debug(clazz, method, offset, constantInstruction, replacementInstruction);
+                    }
+                }
+            }
+
+            // Is the method private, or an instance initializer?
+            else if ((referencedMethod.getAccessFlags() & ClassConstants.INTERNAL_ACC_PRIVATE) != 0 ||
+                     referencedMethod.getName(referencedMethodClass).equals(ClassConstants.INTERNAL_METHOD_NAME_INIT))
+            {
+                // But is it not a special invocation?
+                if (opcode != InstructionConstants.OP_INVOKESPECIAL)
+                {
+                    // Replace the invocation by an invokespecial instruction.
+                    Instruction replacementInstruction =
+                        new ConstantInstruction(InstructionConstants.OP_INVOKESPECIAL,
+                                                constantIndex).shrink();
+
+                    codeAttributeEditor.replaceInstruction(offset, replacementInstruction);
+
+                    if (DEBUG)
+                    {
+                        debug(clazz, method, offset, constantInstruction, replacementInstruction);
+                    }
+                }
+            }
+
+            // Is the method an interface method?
+            else if ((referencedClass.getAccessFlags() & ClassConstants.INTERNAL_ACC_INTERFACE) != 0)
+            {
+                int invokeinterfaceConstant =
+                    (ClassUtil.internalMethodParameterSize(referencedMethod.getDescriptor(referencedMethodClass), false)) << 8;
+
+                // But is it not an interface invocation, or is the parameter
+                // size incorrect?
+                if (opcode != InstructionConstants.OP_INVOKEINTERFACE ||
+                    constantInstruction.constant != invokeinterfaceConstant)
+                {
+                    // Fix the parameter size of the interface invocation.
+                    Instruction replacementInstruction =
+                        new ConstantInstruction(InstructionConstants.OP_INVOKEINTERFACE,
+                                                constantIndex,
+                                                invokeinterfaceConstant).shrink();
+
+                    codeAttributeEditor.replaceInstruction(offset, replacementInstruction);
+
+                    if (DEBUG)
+                    {
+                        debug(clazz, method, offset, constantInstruction, replacementInstruction);
+                    }
+                }
+            }
+
+            // The method is not static, private, an instance initializer, or
+            // an interface method.
+            else
+            {
+                // But is it not a virtual invocation (or a special invocation,
+                // but not a super call)?
+                if (opcode != InstructionConstants.OP_INVOKEVIRTUAL &&
+                    (opcode != InstructionConstants.OP_INVOKESPECIAL ||
+                     !clazz.extends_(referencedClass)))
+                {
+                    // Replace the invocation by an invokevirtual instruction.
+                    Instruction replacementInstruction =
+                        new ConstantInstruction(InstructionConstants.OP_INVOKEVIRTUAL,
+                                                constantIndex).shrink();
+
+                    codeAttributeEditor.replaceInstruction(offset, replacementInstruction);
+
+                    if (DEBUG)
+                    {
+                        debug(clazz, method, offset, constantInstruction, replacementInstruction);
+                    }
+                }
+            }
+        }
+    }
+
+
+    // Implementations for ConstantVisitor.
+
+    public void visitAnyConstant(Clazz clazz, Constant constant) {}
+
+
+    public void visitAnyMethodrefConstant(Clazz clazz, RefConstant refConstant)
+    {
+        // Check if this is an interface method. Note that we're interested in
+        // the class of the method reference, not in the class in which the
+        // method was actually found.
+        //refConstant.referencedClassAccept(this);
+        clazz.constantPoolEntryAccept(refConstant.u2classIndex, this);
+
+        // Get the referenced access flags and names.
+        refConstant.referencedMemberAccept(this);
+    }
+
+
+    public void visitClassConstant(Clazz clazz, ClassConstant classConstant)
+    {
+        // Check if this is an interface class.
+       classConstant.referencedClassAccept(this);
+    }
+
+
+    // Implementations for ClassVisitor.
+
+    public void visitAnyClass(Clazz clazz)
+    {
+        // Remember the referenced class.
+        referencedClass = clazz;
+    }
+
+
+    // Implementations for MemberVisitor.
+
+    public void visitAnyMember(Clazz clazz, Member member)
+    {
+        // Remember the referenced method.
+        referencedMethodClass = clazz;
+        referencedMethod      = member;
+    }
+
+
+    // Small utility methods.
+
+    private void debug(Clazz               clazz,
+                       Method              method,
+                       int                 offset,
+                       ConstantInstruction constantInstruction,
+                       Instruction         replacementInstruction)
+    {
+        System.out.println("MethodInvocationFixer:");
+        System.out.println("  Class       = "+clazz.getName());
+        System.out.println("  Method      = "+method.getName(clazz)+method.getDescriptor(clazz));
+        System.out.println("  Instruction = "+constantInstruction.toString(offset));
+        System.out.println("  -> Class    = "+referencedClass);
+        System.out.println("     Method   = "+referencedMethod);
+        if ((referencedClass.getAccessFlags() & ClassConstants.INTERNAL_ACC_INTERFACE) != 0)
+        {
+            System.out.println("     Parameter size   = "+(ClassUtil.internalMethodParameterSize(referencedMethod.getDescriptor(referencedMethodClass), false)));
+        }
+        System.out.println("  Replacement instruction = "+replacementInstruction.toString(offset));
+    }
+}

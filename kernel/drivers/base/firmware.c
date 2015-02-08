@@ -1,0 +1,18 @@
+
+#include <linux/kobject.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/device.h>
+
+#include "base.h"
+
+struct kobject *firmware_kobj;
+EXPORT_SYMBOL_GPL(firmware_kobj);
+
+int __init firmware_init(void)
+{
+	firmware_kobj = kobject_create_and_add("firmware", NULL);
+	if (!firmware_kobj)
+		return -ENOMEM;
+	return 0;
+}

@@ -1,0 +1,23 @@
+
+
+#ifndef _ASM_MICROBLAZE_CHECKSUM_H
+#define _ASM_MICROBLAZE_CHECKSUM_H
+
+#define csum_tcpudp_nofold	csum_tcpudp_nofold
+static inline __wsum
+csum_tcpudp_nofold(__be32 saddr, __be32 daddr, unsigned short len,
+		   unsigned short proto, __wsum sum)
+{
+	__asm__("add %0, %0, %1\n\t"
+		"addc %0, %0, %2\n\t"
+		"addc %0, %0, %3\n\t"
+		"addc %0, %0, r0\n\t"
+		: "+&d" (sum)
+		: "d" (saddr), "d" (daddr), "d" (len + proto));
+
+	return sum;
+}
+
+#include <asm-generic/checksum.h>
+
+#endif /* _ASM_MICROBLAZE_CHECKSUM_H */

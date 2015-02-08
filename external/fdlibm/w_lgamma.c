@@ -1,0 +1,30 @@
+
+/* @(#)w_lgamma.c 1.3 95/01/18 */
+
+
+#include "fdlibm.h"
+
+extern int signgam;
+
+#ifdef __STDC__
+	double ieee_lgamma(double x)
+#else
+	double ieee_lgamma(x)
+	double x;
+#endif
+{
+#ifdef _IEEE_LIBM
+	return __ieee754_lgamma_r(x,&signgam);
+#else
+        double y;
+        y = __ieee754_lgamma_r(x,&signgam);
+        if(_LIB_VERSION == _IEEE_) return y;
+        if(!ieee_finite(y)&&ieee_finite(x)) {
+            if(ieee_floor(x)==x&&x<=0.0)
+                return __kernel_standard(x,x,15); /* lgamma pole */
+            else
+                return __kernel_standard(x,x,14); /* lgamma overflow */
+        } else
+            return y;
+#endif
+}             

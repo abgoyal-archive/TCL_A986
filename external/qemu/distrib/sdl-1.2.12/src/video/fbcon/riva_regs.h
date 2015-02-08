@@ -1,0 +1,23 @@
+
+#include "SDL_config.h"
+
+#ifndef _RIVA_REGS_H
+#define _RIVA_REGS_H
+
+/* This information comes from the XFree86 NVidia hardware driver */
+
+/* mapped_io register offsets */
+#define PGRAPH_OFFSET	0x00400000
+#define FIFO_OFFSET	0x00800000
+#define ROP_OFFSET	FIFO_OFFSET+0x00000000
+#define CLIP_OFFSET	FIFO_OFFSET+0x00002000
+#define PATT_OFFSET	FIFO_OFFSET+0x00004000
+#define PIXMAP_OFFSET	FIFO_OFFSET+0x00006000
+#define BLT_OFFSET	FIFO_OFFSET+0x00008000
+#define BITMAP_OFFSET	FIFO_OFFSET+0x0000A000
+#define LINE_OFFSET	FIFO_OFFSET+0x0000C000
+#define TRI03_OFFSET	FIFO_OFFSET+0x0000E000
+#define PCIO_OFFSET	0x00601000
+
+#endif /* _RIVA_REGS_H */
+

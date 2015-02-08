@@ -1,0 +1,13 @@
+
+
+#ifndef _CRYPTO_PADLOCK_H
+#define _CRYPTO_PADLOCK_H
+
+#define PADLOCK_ALIGNMENT 16
+
+#define PFX	"padlock: "
+
+#define PADLOCK_CRA_PRIORITY	300
+#define PADLOCK_COMPOSITE_PRIORITY 400
+
+#endif	/* _CRYPTO_PADLOCK_H */

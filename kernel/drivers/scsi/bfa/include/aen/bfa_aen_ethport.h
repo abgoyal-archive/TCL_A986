@@ -1,0 +1,20 @@
+
+
+/* messages define for BFA_AEN_CAT_ETHPORT Module */
+#ifndef	__bfa_aen_ethport_h__
+#define	__bfa_aen_ethport_h__
+
+#include  <cs/bfa_log.h>
+#include  <defs/bfa_defs_aen.h>
+
+#define BFA_AEN_ETHPORT_LINKUP \
+	BFA_LOG_CREATE_ID(BFA_AEN_CAT_ETHPORT, BFA_ETHPORT_AEN_LINKUP)
+#define BFA_AEN_ETHPORT_LINKDOWN \
+	BFA_LOG_CREATE_ID(BFA_AEN_CAT_ETHPORT, BFA_ETHPORT_AEN_LINKDOWN)
+#define BFA_AEN_ETHPORT_ENABLE \
+	BFA_LOG_CREATE_ID(BFA_AEN_CAT_ETHPORT, BFA_ETHPORT_AEN_ENABLE)
+#define BFA_AEN_ETHPORT_DISABLE \
+	BFA_LOG_CREATE_ID(BFA_AEN_CAT_ETHPORT, BFA_ETHPORT_AEN_DISABLE)
+
+#endif
+

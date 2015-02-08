@@ -1,0 +1,6 @@
+obj-y			:= core.o dma.o irq.o pci.o
+obj-m			:=
+obj-n			:=
+obj-			:=
+
+obj-$(CONFIG_LEDS)	+= leds.o

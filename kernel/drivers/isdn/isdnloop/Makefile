@@ -1,0 +1,1 @@
+obj-$(CONFIG_ISDN_DRV_LOOP)	+= isdnloop.o

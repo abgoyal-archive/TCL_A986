@@ -1,0 +1,7 @@
+
+#ifndef _ASM_PAGE_OFFSET_H
+#define _ASM_PAGE_OFFSET_H
+
+#define PAGE_OFFSET_RAW CONFIG_KERNEL_RAM_BASE_ADDRESS
+
+#endif

@@ -1,0 +1,15 @@
+
+
+#ifndef _TBL1636_H_
+#define _TBL1636_H_
+#include "hw.h"
+
+extern struct IODATA COMMON_INIT_TBL_VT1636[8];
+extern struct IODATA DUAL_CHANNEL_ENABLE_TBL_VT1636[1];
+extern struct IODATA SINGLE_CHANNEL_ENABLE_TBL_VT1636[1];
+extern struct IODATA DITHERING_ENABLE_TBL_VT1636[1];
+extern struct IODATA DITHERING_DISABLE_TBL_VT1636[1];
+extern struct IODATA VDD_ON_TBL_VT1636[1];
+extern struct IODATA VDD_OFF_TBL_VT1636[1];
+
+#endif /* _VIA_TBL1636_H_ */

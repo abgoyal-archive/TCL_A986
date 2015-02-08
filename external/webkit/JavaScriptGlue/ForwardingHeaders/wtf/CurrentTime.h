@@ -1,0 +1,2 @@
+
+#include <JavaScriptCore/CurrentTime.h>

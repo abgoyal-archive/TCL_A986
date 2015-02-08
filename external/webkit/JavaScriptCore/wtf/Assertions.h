@@ -1,0 +1,266 @@
+
+
+#ifndef WTF_Assertions_h
+#define WTF_Assertions_h
+
+
+#include "Platform.h"
+
+#if COMPILER(MSVC)
+#include <stddef.h>
+#else
+#include <inttypes.h>
+#endif
+
+#if OS(SYMBIAN)
+#include <e32def.h>
+#include <e32debug.h>
+#endif
+
+#ifdef NDEBUG
+#define ASSERTIONS_DISABLED_DEFAULT 1
+#else
+#define ASSERTIONS_DISABLED_DEFAULT 0
+#endif
+
+#if COMPILER(MSVC7) || COMPILER(WINSCW)
+#define HAVE_VARIADIC_MACRO 0
+#else
+#define HAVE_VARIADIC_MACRO 1
+#endif
+
+#ifndef ASSERT_DISABLED
+#define ASSERT_DISABLED ASSERTIONS_DISABLED_DEFAULT
+#endif
+
+#ifndef ASSERT_MSG_DISABLED
+#if HAVE(VARIADIC_MACRO)
+#define ASSERT_MSG_DISABLED ASSERTIONS_DISABLED_DEFAULT
+#else
+#define ASSERT_MSG_DISABLED 1
+#endif
+#endif
+
+#ifndef ASSERT_ARG_DISABLED
+#define ASSERT_ARG_DISABLED ASSERTIONS_DISABLED_DEFAULT
+#endif
+
+#ifndef FATAL_DISABLED
+#if HAVE(VARIADIC_MACRO)
+#define FATAL_DISABLED ASSERTIONS_DISABLED_DEFAULT
+#else
+#define FATAL_DISABLED 1
+#endif
+#endif
+
+#ifndef ERROR_DISABLED
+#if HAVE(VARIADIC_MACRO)
+#define ERROR_DISABLED ASSERTIONS_DISABLED_DEFAULT
+#else
+#define ERROR_DISABLED 1
+#endif
+#endif
+
+#ifndef LOG_DISABLED
+#if HAVE(VARIADIC_MACRO)
+#define LOG_DISABLED ASSERTIONS_DISABLED_DEFAULT
+#else
+#define LOG_DISABLED 1
+#endif
+#endif
+
+#if COMPILER(GCC)
+#define WTF_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#else
+#define WTF_PRETTY_FUNCTION __FUNCTION__
+#endif
+
+#if COMPILER(GCC) && !defined(__OBJC__)
+#define WTF_ATTRIBUTE_PRINTF(formatStringArgument, extraArguments) __attribute__((__format__(printf, formatStringArgument, extraArguments)))
+#else
+#define WTF_ATTRIBUTE_PRINTF(formatStringArgument, extraArguments) 
+#endif
+
+/* These helper functions are always declared, but not necessarily always defined if the corresponding function is disabled. */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum { WTFLogChannelOff, WTFLogChannelOn } WTFLogChannelState;
+
+typedef struct {
+    unsigned mask;
+    const char *defaultName;
+    WTFLogChannelState state;
+} WTFLogChannel;
+
+void WTFReportAssertionFailure(const char* file, int line, const char* function, const char* assertion);
+void WTFReportAssertionFailureWithMessage(const char* file, int line, const char* function, const char* assertion, const char* format, ...) WTF_ATTRIBUTE_PRINTF(5, 6);
+void WTFReportArgumentAssertionFailure(const char* file, int line, const char* function, const char* argName, const char* assertion);
+void WTFReportFatalError(const char* file, int line, const char* function, const char* format, ...) WTF_ATTRIBUTE_PRINTF(4, 5);
+void WTFReportError(const char* file, int line, const char* function, const char* format, ...) WTF_ATTRIBUTE_PRINTF(4, 5);
+void WTFLog(WTFLogChannel* channel, const char* format, ...) WTF_ATTRIBUTE_PRINTF(2, 3);
+void WTFLogVerbose(const char* file, int line, const char* function, WTFLogChannel* channel, const char* format, ...) WTF_ATTRIBUTE_PRINTF(5, 6);
+
+#ifdef __cplusplus
+}
+#endif
+
+/* CRASH -- gets us into the debugger or the crash reporter -- signals are ignored by the crash reporter so we must do better */
+
+#ifndef CRASH
+#if OS(SYMBIAN)
+#define CRASH() do { \
+    __DEBUGGER(); \
+    User::Panic(_L("Webkit CRASH"),0); \
+    } while(false)
+#else
+#define CRASH() do { \
+    *(int *)(uintptr_t)0xbbadbeef = 0; \
+    ((void(*)())0)(); /* More reliable, but doesn't say BBADBEEF */ \
+} while(false)
+#endif
+#endif
+
+/* ASSERT, ASSERT_NOT_REACHED, ASSERT_UNUSED */
+
+#if OS(WINCE) && !PLATFORM(TORCHMOBILE)
+/* FIXME: We include this here only to avoid a conflict with the ASSERT macro. */
+#include <windows.h>
+#undef min
+#undef max
+#undef ERROR
+#endif
+
+#if OS(WINDOWS) || OS(SYMBIAN)
+/* FIXME: Change to use something other than ASSERT to avoid this conflict with the underlying platform */
+#undef ASSERT
+#endif
+
+#if PLATFORM(BREWMP)
+/* FIXME: We include this here only to avoid a conflict with the COMPILE_ASSERT macro. */
+#include <AEEClassIDs.h>
+
+/* FIXME: Change to use something other than COMPILE_ASSERT to avoid this conflict with the underlying platform */
+#undef COMPILE_ASSERT
+#endif
+
+#if ASSERT_DISABLED
+
+#define ASSERT(assertion) ((void)0)
+#define ASSERT_NOT_REACHED() ((void)0)
+#define ASSERT_UNUSED(variable, assertion) ((void)variable)
+
+#else
+
+#define ASSERT(assertion) do \
+    if (!(assertion)) { \
+        WTFReportAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion); \
+        CRASH(); \
+    } \
+while (0)
+
+#define ASSERT_NOT_REACHED() do { \
+    WTFReportAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, 0); \
+    CRASH(); \
+} while (0)
+
+#define ASSERT_UNUSED(variable, assertion) ASSERT(assertion)
+
+#endif
+
+/* ASSERT_WITH_MESSAGE */
+
+#if COMPILER(MSVC7)
+#define ASSERT_WITH_MESSAGE(assertion) ((void)0)
+#elif COMPILER(WINSCW)
+#define ASSERT_WITH_MESSAGE(assertion, arg...) ((void)0)
+#elif ASSERT_MSG_DISABLED
+#define ASSERT_WITH_MESSAGE(assertion, ...) ((void)0)
+#else
+#define ASSERT_WITH_MESSAGE(assertion, ...) do \
+    if (!(assertion)) { \
+        WTFReportAssertionFailureWithMessage(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion, __VA_ARGS__); \
+        CRASH(); \
+    } \
+while (0)
+#endif
+                        
+                        
+/* ASSERT_ARG */
+
+#if ASSERT_ARG_DISABLED
+
+#define ASSERT_ARG(argName, assertion) ((void)0)
+
+#else
+
+#define ASSERT_ARG(argName, assertion) do \
+    if (!(assertion)) { \
+        WTFReportArgumentAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #argName, #assertion); \
+        CRASH(); \
+    } \
+while (0)
+
+#endif
+
+/* COMPILE_ASSERT */
+#ifndef COMPILE_ASSERT
+#define COMPILE_ASSERT(exp, name) typedef int dummy##name [(exp) ? 1 : -1]
+#endif
+
+/* FATAL */
+
+#if COMPILER(MSVC7)
+#define FATAL() ((void)0)
+#elif COMPILER(WINSCW)
+#define FATAL(arg...) ((void)0)
+#elif FATAL_DISABLED
+#define FATAL(...) ((void)0)
+#else
+#define FATAL(...) do { \
+    WTFReportFatalError(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, __VA_ARGS__); \
+    CRASH(); \
+} while (0)
+#endif
+
+/* LOG_ERROR */
+
+#if COMPILER(MSVC7)
+#define LOG_ERROR() ((void)0)
+#elif COMPILER(WINSCW)
+#define LOG_ERROR(arg...)  ((void)0)
+#elif ERROR_DISABLED
+#define LOG_ERROR(...) ((void)0)
+#else
+#define LOG_ERROR(...) WTFReportError(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, __VA_ARGS__)
+#endif
+
+/* LOG */
+
+#if COMPILER(MSVC7)
+#define LOG() ((void)0)
+#elif COMPILER(WINSCW)
+#define LOG(arg...) ((void)0)
+#elif LOG_DISABLED
+#define LOG(channel, ...) ((void)0)
+#else
+#define LOG(channel, ...) WTFLog(&JOIN_LOG_CHANNEL_WITH_PREFIX(LOG_CHANNEL_PREFIX, channel), __VA_ARGS__)
+#define JOIN_LOG_CHANNEL_WITH_PREFIX(prefix, channel) JOIN_LOG_CHANNEL_WITH_PREFIX_LEVEL_2(prefix, channel)
+#define JOIN_LOG_CHANNEL_WITH_PREFIX_LEVEL_2(prefix, channel) prefix ## channel
+#endif
+
+/* LOG_VERBOSE */
+
+#if COMPILER(MSVC7)
+#define LOG_VERBOSE(channel) ((void)0)
+#elif COMPILER(WINSCW)
+#define LOG_VERBOSE(channel, arg...) ((void)0)
+#elif LOG_DISABLED
+#define LOG_VERBOSE(channel, ...) ((void)0)
+#else
+#define LOG_VERBOSE(channel, ...) WTFLogVerbose(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, &JOIN_LOG_CHANNEL_WITH_PREFIX(LOG_CHANNEL_PREFIX, channel), __VA_ARGS__)
+#endif
+
+#endif /* WTF_Assertions_h */

@@ -1,0 +1,9 @@
+
+#ifndef __ASM_ARCH_MEMORY_H
+#define __ASM_ARCH_MEMORY_H
+
+#define PHYS_OFFSET	UL(0x40000000)
+#define ISA_DMA_THRESHOLD	(PHYS_OFFSET + SZ_256M - 1)
+#define MAX_DMA_ADDRESS		(PAGE_OFFSET + SZ_256M)
+
+#endif

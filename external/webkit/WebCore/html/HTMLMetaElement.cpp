@@ -1,0 +1,121 @@
+
+
+#include "config.h"
+#include "HTMLMetaElement.h"
+
+#include "Document.h"
+#include "HTMLNames.h"
+#include "MappedAttribute.h"
+
+#ifdef ANDROID_META_SUPPORT
+#include "Settings.h"
+#include "WebViewCore.h"
+#endif
+
+namespace WebCore {
+
+using namespace HTMLNames;
+
+HTMLMetaElement::HTMLMetaElement(const QualifiedName& tagName, Document* doc)
+    : HTMLElement(tagName, doc)
+{
+    ASSERT(hasTagName(metaTag));
+}
+
+HTMLMetaElement::~HTMLMetaElement()
+{
+}
+
+void HTMLMetaElement::parseMappedAttribute(MappedAttribute* attr)
+{
+    if (attr->name() == http_equivAttr) {
+        m_equiv = attr->value();
+        process();
+    } else if (attr->name() == contentAttr) {
+        m_content = attr->value();
+        process();
+    } else if (attr->name() == nameAttr) {
+        // Do nothing.
+    } else
+        HTMLElement::parseMappedAttribute(attr);
+}
+
+void HTMLMetaElement::insertedIntoDocument()
+{
+    HTMLElement::insertedIntoDocument();
+    process();
+}
+
+void HTMLMetaElement::process()
+{
+#ifdef ANDROID_META_SUPPORT
+    if (!inDocument() || m_content.isNull())
+        return;
+    bool updateViewport = false;
+    if (equalIgnoringCase(name(), "viewport")) {
+        document()->processMetadataSettings(m_content);
+        updateViewport = true;
+    } else if (equalIgnoringCase(name(), "format-detection"))
+        document()->processMetadataSettings(m_content);
+    else if ((equalIgnoringCase(name(), "HandheldFriendly")
+            && equalIgnoringCase(m_content, "true") ||
+            equalIgnoringCase(name(), "MobileOptimized"))
+            && document()->settings()->viewportWidth() == -1) {
+        // fit mobile sites directly in the screen
+        document()->settings()->setMetadataSettings("width", "device-width");
+        updateViewport = true;
+    }
+    // update the meta data if it is the top document
+    if (updateViewport && !document()->ownerElement()) {
+        FrameView* view = document()->view();
+        if (view)
+            android::WebViewCore::getWebViewCore(view)->updateViewport();
+    }
+#endif
+    // Get the document to process the tag, but only if we're actually part of DOM tree (changing a meta tag while
+    // it's not in the tree shouldn't have any effect on the document)
+    if (inDocument() && !m_equiv.isNull() && !m_content.isNull())
+        document()->processHttpEquiv(m_equiv, m_content);
+}
+
+String HTMLMetaElement::content() const
+{
+    return getAttribute(contentAttr);
+}
+
+void HTMLMetaElement::setContent(const String& value)
+{
+    setAttribute(contentAttr, value);
+}
+
+String HTMLMetaElement::httpEquiv() const
+{
+    return getAttribute(http_equivAttr);
+}
+
+void HTMLMetaElement::setHttpEquiv(const String& value)
+{
+    setAttribute(http_equivAttr, value);
+}
+
+String HTMLMetaElement::name() const
+{
+    return getAttribute(nameAttr);
+}
+
+void HTMLMetaElement::setName(const String& value)
+{
+    setAttribute(nameAttr, value);
+}
+
+String HTMLMetaElement::scheme() const
+{
+    return getAttribute(schemeAttr);
+}
+
+void HTMLMetaElement::setScheme(const String &value)
+{
+    setAttribute(schemeAttr, value);
+}
+
+}

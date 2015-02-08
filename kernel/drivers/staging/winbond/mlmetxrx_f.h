@@ -1,0 +1,19 @@
+
+#ifndef _MLMETXRX_H
+#define _MLMETXRX_H
+
+#include "core.h"
+
+void MLME_GetNextPacket(struct wbsoft_priv *adapter, struct wb35_descriptor *pDes);
+u8 MLMESendFrame(struct wbsoft_priv *adapter,
+		 u8 *pMMPDU, u16 len, u8 DataType);
+
+void
+MLME_SendComplete(struct wbsoft_priv *adapter, u8 PacketID,
+		  unsigned char SendOK);
+
+#ifdef _IBSS_BEACON_SEQ_STICK_
+s8 SendBCNullData(struct wbsoft_priv *adapter, u16 wIdx);
+#endif
+
+#endif

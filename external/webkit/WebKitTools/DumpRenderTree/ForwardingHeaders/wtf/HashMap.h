@@ -1,0 +1,2 @@
+
+#include <JavaScriptCore/HashMap.h>

@@ -1,0 +1,174 @@
+
+
+#ifndef COMVariantSetter_h
+#define COMVariantSetter_h
+
+#include <WebCore/BString.h>
+#include <WebCore/COMPtr.h>
+#include <wtf/Assertions.h>
+
+namespace WebCore {
+    class String;
+}
+
+template<typename T> struct COMVariantSetter {};
+
+template<typename T> struct COMVariantSetterBase
+{
+    static inline VARENUM variantType(const T&)
+    {
+        return COMVariantSetter<T>::VariantType;
+    }
+};
+
+template<> struct COMVariantSetter<WebCore::String> : COMVariantSetterBase<WebCore::String>
+{
+    static const VARENUM VariantType = VT_BSTR;
+
+    static void setVariant(VARIANT* variant, const WebCore::String& value)
+    {
+        ASSERT(V_VT(variant) == VT_EMPTY);
+
+        V_VT(variant) = VariantType;
+        V_BSTR(variant) = WebCore::BString(value).release();
+    }
+};
+
+template<> struct COMVariantSetter<bool> : COMVariantSetterBase<bool>
+{
+    static const VARENUM VariantType = VT_BOOL;
+
+    static void setVariant(VARIANT* variant, bool value)
+    {
+        ASSERT(V_VT(variant) == VT_EMPTY);
+
+        V_VT(variant) = VariantType;
+        V_BOOL(variant) = value;
+    }
+};
+
+template<> struct COMVariantSetter<unsigned long long> : COMVariantSetterBase<unsigned long long>
+{
+    static const VARENUM VariantType = VT_UI8;
+
+    static void setVariant(VARIANT* variant, unsigned long long value)
+    {
+        ASSERT(V_VT(variant) == VT_EMPTY);
+
+        V_VT(variant) = VariantType;
+        V_UI8(variant) = value;
+    }
+};
+
+template<> struct COMVariantSetter<int> : COMVariantSetterBase<int>
+{
+    static const VARENUM VariantType = VT_I4;
+
+    static void setVariant(VARIANT* variant, int value)
+    {
+        ASSERT(V_VT(variant) == VT_EMPTY);
+
+        V_VT(variant) = VariantType;
+        V_I4(variant) = value;
+    }
+};
+
+template<> struct COMVariantSetter<float> : COMVariantSetterBase<float>
+{
+    static const VARENUM VariantType = VT_R4;
+
+    static void setVariant(VARIANT* variant, float value)
+    {
+        ASSERT(V_VT(variant) == VT_EMPTY);
+
+        V_VT(variant) = VariantType;
+        V_R4(variant) = value;
+    }
+};
+
+template<typename T> struct COMVariantSetter<COMPtr<T> > : COMVariantSetterBase<COMPtr<T> >
+{
+    static const VARENUM VariantType = VT_UNKNOWN;
+
+    static void setVariant(VARIANT* variant, const COMPtr<T>& value)
+    {
+        ASSERT(V_VT(variant) == VT_EMPTY);
+
+        V_VT(variant) = VariantType;
+        V_UNKNOWN(variant) = value.get();
+        value->AddRef();
+    }
+};
+
+template<typename COMType, typename UnderlyingType>
+struct COMIUnknownVariantSetter : COMVariantSetterBase<UnderlyingType>
+{
+    static const VARENUM VariantType = VT_UNKNOWN;
+
+    static void setVariant(VARIANT* variant, const UnderlyingType& value)
+    {
+        ASSERT(V_VT(variant) == VT_EMPTY);
+
+        V_VT(variant) = VariantType;
+        V_UNKNOWN(variant) = COMType::createInstance(value);
+    }
+};
+
+class COMVariant {
+public:
+    COMVariant()
+    {
+        ::VariantInit(&m_variant);
+    }
+
+    template<typename UnderlyingType>
+    COMVariant(UnderlyingType value)
+    {
+        ::VariantInit(&m_variant);
+        COMVariantSetter<UnderlyingType>::setVariant(&m_variant, value);
+    }
+
+    ~COMVariant()
+    {
+        ::VariantClear(&m_variant);
+    }
+
+    COMVariant(const COMVariant& other)
+    {
+        ::VariantInit(&m_variant);
+        other.copyTo(&m_variant);
+    }
+
+    COMVariant& operator=(const COMVariant& other)
+    {
+        other.copyTo(&m_variant);
+        return *this;
+    }
+
+    void copyTo(VARIANT* dest) const
+    {
+        ::VariantCopy(dest, const_cast<VARIANT*>(&m_variant));
+    }
+
+    VARENUM variantType() const { return static_cast<VARENUM>(V_VT(&m_variant)); }
+
+private:
+    VARIANT m_variant;
+};
+
+template<> struct COMVariantSetter<COMVariant>
+{
+    static inline VARENUM variantType(const COMVariant& value)
+    {
+        return value.variantType();
+    }
+
+    static void setVariant(VARIANT* variant, const COMVariant& value)
+    {
+        ASSERT(V_VT(variant) == VT_EMPTY);
+
+        value.copyTo(variant);
+    }
+};
+
+#endif // COMVariantSetter

@@ -1,0 +1,13 @@
+menu "I2C Algorithms"
+	depends on !I2C_HELPER_AUTO
+
+config I2C_ALGOBIT
+	tristate "I2C bit-banging interfaces"
+
+config I2C_ALGOPCF
+	tristate "I2C PCF 8584 interfaces"
+
+config I2C_ALGOPCA
+	tristate "I2C PCA 9564 interfaces"
+
+endmenu

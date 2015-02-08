@@ -1,0 +1,5 @@
+
+
+@interface NSObject (WebPlugInPrivate)
+
+@end

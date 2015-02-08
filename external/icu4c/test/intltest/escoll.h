@@ -1,0 +1,38 @@
+
+
+#ifndef _ESCOLL
+#define _ESCOLL
+
+#include "unicode/utypes.h"
+
+#if !UCONFIG_NO_COLLATION
+
+#include "tscoll.h"
+
+class CollationSpanishTest: public IntlTestCollator {
+public:
+    // If this is too small for the test data, just increase it.
+    // Just don't make it too large, otherwise the executable will get too big
+    enum EToken_Len { MAX_TOKEN_LEN = 16 };
+
+    CollationSpanishTest();
+    virtual ~CollationSpanishTest();
+    void runIndexedTest( int32_t index, UBool exec, const char* &name, char* par = NULL );
+
+    // performs tests with strength PRIMARY
+    void TestPrimary(/* char* par */);
+
+    // prforms test with strength TERTIARY
+    void TestTertiary(/* char* par */);
+
+private:
+    static const UChar testSourceCases[][MAX_TOKEN_LEN];
+    static const UChar testTargetCases[][MAX_TOKEN_LEN];
+    static const Collator::EComparisonResult results[];
+
+    Collator *myCollation;
+};
+
+#endif /* #if !UCONFIG_NO_COLLATION */
+
+#endif

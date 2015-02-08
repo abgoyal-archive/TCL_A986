@@ -1,0 +1,6 @@
+input	vmlinux	input_event
+metadata	vmlinux	core_marker_format
+metadata	vmlinux	core_marker_id
+module_state	vmlinux	list_module
+softirq_state	vmlinux	softirq_vec
+syscall_state	vmlinux	sys_call_table

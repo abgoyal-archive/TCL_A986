@@ -1,0 +1,58 @@
+#ifndef __ICU_INTLTEST_TEXTFILE__
+#define __ICU_INTLTEST_TEXTFILE__
+
+#include "intltest.h"
+#include "filestrm.h"
+
+class TextFile {
+ public:
+    /**
+     * Open a file with the given name, in the given encoding, in the
+     * ICU testdata directory. See textfile.cpp to determine if the
+     * 'name' and 'encoding' parameters are aliased or copied.
+     */
+    TextFile(const char* name, const char* encoding, UErrorCode& ec);
+
+    virtual ~TextFile();
+
+    /**
+     * Read a line terminated by ^J or ^M or ^M^J, and convert it from
+     * this file's encoding to Unicode. The EOL character(s) are not
+     * included in 'line'.
+     * @return TRUE if a line was read, or FALSE if the EOF
+     * was reached or an error occurred
+     */
+    UBool readLine(UnicodeString& line, UErrorCode& ec);
+
+    /**
+     * Read a line, ignoring blank lines and lines that start with
+     * '#'.  Trim leading white space.
+     * @param trim if TRUE then remove leading rule white space
+     * @return TRUE if a line was read, or FALSE if the EOF
+     * was reached or an error occurred
+     */
+    UBool readLineSkippingComments(UnicodeString& line, UErrorCode& ec,
+                                   UBool trim = FALSE);
+
+    /**
+     * Return the line number of the last line returned by readLine().
+     */
+    inline int32_t getLineNumber() const;
+
+ private:
+    UBool ensureCapacity(int32_t capacity);
+    UBool setBuffer(int32_t index, char c, UErrorCode& ec);
+
+    FileStream* file;
+    char* name;
+    char* encoding;
+    char* buffer;
+    int32_t capacity;
+    int32_t lineNo;
+};
+
+inline int32_t TextFile::getLineNumber() const {
+    return lineNo;
+}
+
+#endif

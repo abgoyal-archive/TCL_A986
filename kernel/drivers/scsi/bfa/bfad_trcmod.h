@@ -1,0 +1,30 @@
+
+
+
+
+#ifndef __BFAD_TRCMOD_H__
+#define __BFAD_TRCMOD_H__
+
+#include <cs/bfa_trc.h>
+
+enum {
+	/* 2.6 Driver */
+	BFA_TRC_LDRV_BFAD		= 1,
+	BFA_TRC_LDRV_BFAD_2_6		= 2,
+	BFA_TRC_LDRV_BFAD_2_6_9		= 3,
+	BFA_TRC_LDRV_BFAD_2_6_10	= 4,
+	BFA_TRC_LDRV_INTR		= 5,
+	BFA_TRC_LDRV_IOCTL		= 6,
+	BFA_TRC_LDRV_OS			= 7,
+	BFA_TRC_LDRV_IM			= 8,
+	BFA_TRC_LDRV_IM_2_6		= 9,
+	BFA_TRC_LDRV_IM_2_6_9		= 10,
+	BFA_TRC_LDRV_IM_2_6_10		= 11,
+	BFA_TRC_LDRV_TM			= 12,
+	BFA_TRC_LDRV_IPFC		= 13,
+	BFA_TRC_LDRV_IM_2_4		= 14,
+	BFA_TRC_LDRV_IM_VMW		= 15,
+	BFA_TRC_LDRV_IM_LT_2_6_10	= 16,
+};
+
+#endif /* __BFAD_TRCMOD_H__ */

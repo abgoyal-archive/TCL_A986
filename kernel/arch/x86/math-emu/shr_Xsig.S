@@ -1,0 +1,70 @@
+
+	.file	"shr_Xsig.S"
+
+#include "fpu_emu.h"
+
+.text
+ENTRY(shr_Xsig)
+	push	%ebp
+	movl	%esp,%ebp
+	pushl	%esi
+	movl	PARAM2,%ecx
+	movl	PARAM1,%esi
+	cmpl	$32,%ecx	/* shrd only works for 0..31 bits */
+	jnc	L_more_than_31
+
+/* less than 32 bits */
+	pushl	%ebx
+	movl	(%esi),%eax	/* lsl */
+	movl	4(%esi),%ebx	/* midl */
+	movl	8(%esi),%edx	/* msl */
+	shrd	%cl,%ebx,%eax
+	shrd	%cl,%edx,%ebx
+	shr	%cl,%edx
+	movl	%eax,(%esi)
+	movl	%ebx,4(%esi)
+	movl	%edx,8(%esi)
+	popl	%ebx
+	popl	%esi
+	leave
+	ret
+
+L_more_than_31:
+	cmpl	$64,%ecx
+	jnc	L_more_than_63
+
+	subb	$32,%cl
+	movl	4(%esi),%eax	/* midl */
+	movl	8(%esi),%edx	/* msl */
+	shrd	%cl,%edx,%eax
+	shr	%cl,%edx
+	movl	%eax,(%esi)
+	movl	%edx,4(%esi)
+	movl	$0,8(%esi)
+	popl	%esi
+	leave
+	ret
+
+L_more_than_63:
+	cmpl	$96,%ecx
+	jnc	L_more_than_95
+
+	subb	$64,%cl
+	movl	8(%esi),%eax	/* msl */
+	shr	%cl,%eax
+	xorl	%edx,%edx
+	movl	%eax,(%esi)
+	movl	%edx,4(%esi)
+	movl	%edx,8(%esi)
+	popl	%esi
+	leave
+	ret
+
+L_more_than_95:
+	xorl	%eax,%eax
+	movl	%eax,(%esi)
+	movl	%eax,4(%esi)
+	movl	%eax,8(%esi)
+	popl	%esi
+	leave
+	ret

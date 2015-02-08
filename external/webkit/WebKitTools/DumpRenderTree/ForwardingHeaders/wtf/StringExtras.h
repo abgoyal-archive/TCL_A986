@@ -1,0 +1,2 @@
+
+#include <JavaScriptCore/StringExtras.h>

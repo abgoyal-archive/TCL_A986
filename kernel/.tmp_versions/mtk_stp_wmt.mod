@@ -1,0 +1,2 @@
+../mediatek/source/kernel/drivers/combo/common/mtk_stp_wmt.ko
+../mediatek/source/kernel/drivers/combo/common/linux/pri/stp_chrdev_wmt.o ../mediatek/source/kernel/drivers/combo/common/linux/pri/wmt_lib.o ../mediatek/source/kernel/drivers/combo/common/linux/pri/wmt_lib_conf.o ../mediatek/source/kernel/drivers/combo/common/linux/pri/wmt_lib_plat.o ../mediatek/source/kernel/drivers/combo/common/core/mtkwmt.o

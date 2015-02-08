@@ -1,0 +1,3 @@
+
+
+#include <plat/smp.h>

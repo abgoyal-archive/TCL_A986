@@ -1,0 +1,3 @@
+config PNPACPI
+	bool
+	default (PNP && ACPI)

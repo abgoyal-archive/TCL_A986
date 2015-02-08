@@ -1,0 +1,139 @@
+
+
+// Modified from DragDataWin.cpp to not directly call any windows methods as
+// they may not be available to us in the multiprocess 
+
+#include "config.h"
+#include "DragData.h"
+
+#include "ChromiumBridge.h"
+#include "ChromiumDataObject.h"
+#include "Clipboard.h"
+#include "ClipboardChromium.h"
+#include "DocumentFragment.h"
+#include "FileSystem.h"
+#include "KURL.h"
+#include "markup.h"
+#include "NotImplemented.h"
+#include "PlatformString.h"
+
+namespace WebCore {
+
+static bool containsHTML(const ChromiumDataObject* dropData)
+{
+    return dropData->textHtml.length() > 0;
+}
+
+PassRefPtr<Clipboard> DragData::createClipboard(ClipboardAccessPolicy policy) const
+{
+    RefPtr<ClipboardChromium> clipboard = ClipboardChromium::create(true,
+        m_platformDragData, policy);
+
+    return clipboard.release();
+}
+
+bool DragData::containsURL() const
+{
+    return !asURL().isEmpty();
+}
+
+String DragData::asURL(String* title) const
+{
+    String url;
+    if (m_platformDragData->url.isValid())
+        url = m_platformDragData->url.string();
+    else if (m_platformDragData->filenames.size() == 1) {
+        String fileName = m_platformDragData->filenames[0];
+        fileName = ChromiumBridge::getAbsolutePath(fileName);
+        if (fileExists(fileName) && !ChromiumBridge::isDirectory(fileName))
+            url = ChromiumBridge::filePathToURL(fileName).string();
+    }
+ 
+    // |title| can be NULL
+    if (title)
+        *title = m_platformDragData->urlTitle;
+    return url;
+}
+
+bool DragData::containsFiles() const
+{
+    return !m_platformDragData->filenames.isEmpty();
+}
+
+void DragData::asFilenames(Vector<String>& result) const
+{
+    for (size_t i = 0; i < m_platformDragData->filenames.size(); ++i)
+        result.append(m_platformDragData->filenames[i]);
+}
+
+bool DragData::containsPlainText() const
+{
+    return !m_platformDragData->plainText.isEmpty();
+}
+
+String DragData::asPlainText() const
+{
+    return m_platformDragData->plainText;
+}
+
+bool DragData::containsColor() const
+{
+    notImplemented();
+    return false;
+}
+
+bool DragData::canSmartReplace() const
+{
+    // Mimic the situations in which mac allows drag&drop to do a smart replace.
+    // This is allowed whenever the drag data contains a 'range' (ie.,
+    // ClipboardWin::writeRange is called).  For example, dragging a link
+    // should not result in a space being added.
+    return !m_platformDragData->plainText.isEmpty()
+        && !m_platformDragData->url.isValid();
+}
+
+bool DragData::containsCompatibleContent() const
+{
+    return containsPlainText()
+        || containsURL()
+        || containsHTML(m_platformDragData)
+        || containsColor()
+        || containsFiles();
+}
+
+PassRefPtr<DocumentFragment> DragData::asFragment(Document* doc) const
+{     
+    /*
+     * Order is richest format first. On OSX this is:
+     * * Web Archive
+     * * Filenames
+     * * HTML
+     * * RTF
+     * * TIFF
+     * * PICT
+     */
+
+    if (containsFiles()) {
+        // FIXME: Implement this.  Should be pretty simple to make some HTML
+        // and call createFragmentFromMarkup.
+        //if (RefPtr<DocumentFragment> fragment = createFragmentFromMarkup(doc,
+        //    ?, KURL()))
+        //    return fragment;
+    }
+
+    if (!m_platformDragData->textHtml.isEmpty()) {
+        RefPtr<DocumentFragment> fragment = createFragmentFromMarkup(doc,
+            m_platformDragData->textHtml, m_platformDragData->htmlBaseUrl, FragmentScriptingNotAllowed);
+        return fragment.release();
+    }
+
+    return 0;
+}
+
+Color DragData::asColor() const
+{
+    notImplemented();
+    return Color();
+}
+
+} // namespace WebCore

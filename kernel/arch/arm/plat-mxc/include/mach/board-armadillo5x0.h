@@ -1,0 +1,7 @@
+
+
+
+#ifndef __ASM_ARCH_MXC_BOARD_ARMADILLO5X0_H__
+#define __ASM_ARCH_MXC_BOARD_ARMADILLO5X0_H__
+
+#endif
